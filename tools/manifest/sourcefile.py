@@ -8,6 +8,8 @@ from typing import (Any, BinaryIO, Callable, Deque, Dict, Iterable, List, Option
                     Set, Text, Tuple, Union, cast)
 from urllib.parse import urljoin
 
+from tools.metadata.webfeatures.schema import WEB_FEATURES_YML_FILENAME
+
 try:
     from xml.etree import cElementTree as ElementTree
 except ImportError:
@@ -302,6 +304,7 @@ class SourceFile:
         return (self.is_dir() or
                 self.name_prefix("MANIFEST") or
                 self.filename == "META.yml" or
+                self.filename == WEB_FEATURES_YML_FILENAME or
                 self.filename.startswith(".") or
                 self.filename.endswith(".headers") or
                 self.filename.endswith(".ini") or
