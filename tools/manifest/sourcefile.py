@@ -8,8 +8,6 @@ from typing import (Any, BinaryIO, Callable, Deque, Dict, Iterable, List, Option
                     Set, Text, Tuple, Union, cast)
 from urllib.parse import urljoin
 
-from tools.metadata.webfeatures.schema import WEB_FEATURES_YML_FILENAME
-
 try:
     from xml.etree import cElementTree as ElementTree
 except ImportError:
@@ -30,6 +28,10 @@ from .item import (ConformanceCheckerTest,
                    VisualTest,
                    WebDriverSpecTest)
 from .utils import cached_property
+
+# Cannot do `from ..gitignore import gitignore` because
+# relative import beyond toplevel throws *ImportError*!
+from metadata.webfeatures.schema import WEB_FEATURES_YML_FILENAME  # type: ignore
 
 wd_pattern = "*.py"
 js_meta_re = re.compile(br"//\s*META:\s*(\w*)=(.*)$")
