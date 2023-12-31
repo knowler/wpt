@@ -21,7 +21,15 @@ logger = logging.getLogger(__name__)
 MANIFEST_FILE_NAME = "WEB_FEATURES_MANIFEST.json"
 
 def create_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser()
+    """
+    Creates an argument parser for the script.
+
+    Returns:
+        argparse.ArgumentParser: The configured argument parser.
+    """
+    parser = argparse.ArgumentParser(
+        description="Maps tests to web features within a repo root."
+    )
     parser.add_argument("--repo-root", type=str,
                         help="The WPT directory. Use this "
                         "option if the script exists outside the repository")
@@ -29,6 +37,19 @@ def create_parser() -> argparse.ArgumentParser:
 
 
 def find_all_test_files_in_dir(root_dir: str, rel_dir_path: str) -> List[SourceFile]:
+    """
+    Finds all test files within a given directory.
+
+    Ignores any SourceFiles that are marked as non_test or the type
+    is SupportFile.item_type
+
+    Args:
+        root_dir (str): The root directory of the repository.
+        rel_dir_path (str): The relative path of the directory to search.
+
+    Returns:
+        List[SourceFile]: A list of SourceFile objects representing the found test files.
+    """
     rv: List[SourceFile] = []
     full_dir_path = os.path.join(root_dir, rel_dir_path)
     for file in os.listdir(full_dir_path):
@@ -41,7 +62,11 @@ def find_all_test_files_in_dir(root_dir: str, rel_dir_path: str) -> List[SourceF
 
 @dataclass
 class CmdConfig():
-    repo_root: str
+    """
+    Configuration for the command-line options.
+    """
+
+    repo_root: str  # The root directory of the WPT repository
 
 
 def map_tests_to_web_features(
@@ -50,6 +75,16 @@ def map_tests_to_web_features(
         result: WebFeaturesMap,
         visited_dirs: Set[str] = set(),
         prev_inherited_features: List[str] = []) -> None:
+    """
+    Recursively maps tests to web features within a directory structure.
+
+    Args:
+        cmd_cfg (CmdConfig): The configuration for the command-line options.
+        rel_dir_path (str): The relative path of the directory to process.
+        result (WebFeaturesMap): The object to store the mapping results.
+        visited_dirs (Set[str], optional): A set of directories that have already been processed. Defaults to set().
+        prev_inherited_features (List[str], optional): A list of inherited web features from parent directories. Defaults to [].
+    """
     for current_dir, sub_dirs, _ in os.walk(os.path.join(cmd_cfg.repo_root, rel_dir_path)):
         # Sometimes it will add a . at the beginning. Let's resolve the absolute path to disambiguate.
         current_dir = Path(current_dir).resolve().__str__()

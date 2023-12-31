@@ -12,23 +12,49 @@ from ..metadata.webfeatures.schema import FeatureEntry, FeatureFile, WebFeatures
 
 
 class WebFeaturesMap:
+    """
+    Stores a mapping of web features to their associated test files.
+    """
+
     def __init__(self) -> None:
+        """
+        Initializes the WebFeaturesMap with an OrderedDict to maintain feature order.
+        """
         self._feature_tests_map_: OrderedDict[str, Set[str]] = OrderedDict()
 
     def add(self, feature: str, manifest_items: List[ManifestItem]) -> None:
+        """
+        Adds a web feature and its associated test files to the map.
+
+        Args:
+            feature: The name of the web feature.
+            manifest_items: The ManifestItem objects representing the test files.
+        """
         if self._feature_tests_map_.get(feature) is None:
             self._feature_tests_map_[feature] = set()
         self._feature_tests_map_[feature].update([manifest_item.path for manifest_item in manifest_items])
 
     def to_json(self) -> str:
+        """
+        Serializes the WebFeaturesMap to a JSON string.
+
+        Returns:
+            The JSON string representation of the map.
+        """
         return json.dumps(
             self._feature_tests_map_,
             cls=WebFeatureMapEncoder)
 
 class WebFeatureMapEncoder(json.JSONEncoder):
+    """
+    Custom JSON encoder to handle sets within the WebFeaturesMap.
+
+    Sets cannot serialize to JSON by default. This encoder handles that.
+    """
     def default(self, obj: Any) -> Any:
-        # Set cannot serialize to JSON by default.
-        # Treat it like a list
+        """
+        Encodes sets as sorted lists for JSON serialization.
+        """
         if isinstance(obj, set):
             # Sort the converted list so that the tests are deterministic
             return sorted(list(obj))
@@ -37,12 +63,16 @@ class WebFeatureMapEncoder(json.JSONEncoder):
 
 class WebFeatureToTestsDirMapper:
     """
-    Given the specified directory, maps web feature(s) to tests.
+    Maps web features to tests within a specified directory.
     """
+
     def __init__(
             self,
             all_test_files_in_dir: List[SourceFile],
             web_feature_file: Optional[WebFeaturesFile]):
+        """
+        Initializes the mapper with test files and web feature information.
+        """
 
         self.all_test_files_in_dir = all_test_files_in_dir
         self.test_path_to_manifest_items_map = dict([(basename(f.path), f.manifest_items()[1]) for f in self.all_test_files_in_dir])
