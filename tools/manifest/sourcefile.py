@@ -29,8 +29,8 @@ from .item import (ConformanceCheckerTest,
                    WebDriverSpecTest)
 from .utils import cached_property
 
-# Cannot do `from ..gitignore import gitignore` because
-# relative import beyond toplevel throws *ImportError*!
+# Cannot do `from ..metadata.webfeatures.schema import WEB_FEATURES_YML_FILENAME`
+# because relative import beyond toplevel throws *ImportError*!
 from metadata.webfeatures.schema import WEB_FEATURES_YML_FILENAME  # type: ignore
 
 wd_pattern = "*.py"
