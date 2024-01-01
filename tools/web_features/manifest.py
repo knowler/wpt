@@ -20,6 +20,10 @@ logger = logging.getLogger(__name__)
 
 MANIFEST_FILE_NAME = "WEB_FEATURES_MANIFEST.json"
 
+
+def abs_path(path: str) -> str:
+    return os.path.abspath(os.path.expanduser(path))
+
 def create_parser() -> argparse.ArgumentParser:
     """
     Creates an argument parser for the script.
@@ -33,6 +37,8 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repo-root", type=str,
                         help="The WPT directory. Use this "
                         "option if the script exists outside the repository")
+    parser.add_argument(
+        "-p", "--path", type=abs_path, help="Path to manifest file.")
     return parser
 
 
@@ -128,11 +134,12 @@ def main(venv: Any = None, **kwargs: Any) -> int:
     assert logger is not None
 
     repo_root = kwargs.get('repo_root') or localpaths.repo_root
+    path = kwargs.get("path") or os.path.join(repo_root, MANIFEST_FILE_NAME)
 
     cmd_cfg = CmdConfig(repo_root)
     feature_map = WebFeaturesMap()
     map_tests_to_web_features(cmd_cfg, "", feature_map)
-    with open(os.path.join(cmd_cfg.repo_root, MANIFEST_FILE_NAME), "w") as outfile:
+    with open(path, "w") as outfile:
         outfile.write(feature_map.to_json())
 
     return 0

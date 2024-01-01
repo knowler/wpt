@@ -3,11 +3,14 @@
 import os
 from unittest.mock import ANY, Mock, call, mock_open, patch
 
+import pytest
+
 from ..manifest import create_parser, find_all_test_files_in_dir, main, map_tests_to_web_features, CmdConfig
 from ..web_feature_map import WebFeatureToTestsDirMapper, WebFeaturesMap
 from ...metadata.webfeatures.schema import WEB_FEATURES_YML_FILENAME
 from ...manifest.sourcefile import SourceFile
 from ...manifest.item import SupportFile
+from ... import localpaths
 
 
 @patch("os.listdir")
@@ -158,9 +161,49 @@ def test_parser_with_repo_root():
     assert args.repo_root == "/path/to/repo"
 
 
+def test_parser_with_path_provided_abs_path():
+    parser = create_parser()
+    args = parser.parse_args(["--path", "/manifest-path"])
+    assert args.path == "/manifest-path"
+
+
+@pytest.mark.parametrize('main_kwargs,expected_repo_root,expected_path', [
+    (
+        {},
+        localpaths.repo_root,
+        os.path.join(localpaths.repo_root, "WEB_FEATURES_MANIFEST.json")
+    ),
+    (
+        {
+            "repo_root": os.path.join(os.sep, "test_repo_root"),
+        },
+        os.path.join(os.sep, "test_repo_root"),
+        os.path.join(os.sep, "test_repo_root", "WEB_FEATURES_MANIFEST.json")
+    ),
+    (
+        {
+            "path": os.path.join(os.sep, "test_path", "WEB_FEATURES_MANIFEST.json"),
+        },
+        localpaths.repo_root,
+        os.path.join(os.sep, "test_path", "WEB_FEATURES_MANIFEST.json")
+    ),
+    (
+        {
+            "path": os.path.join(os.sep, "test_path", "WEB_FEATURES_MANIFEST.json"),
+            "repo_root": os.path.join(os.sep, "test_repo_root"),
+        },
+        os.path.join(os.sep, "test_repo_root"),
+        os.path.join(os.sep, "test_path", "WEB_FEATURES_MANIFEST.json")
+    ),
+])
 @patch("builtins.open", new_callable=mock_open)
 @patch("tools.web_features.manifest.map_tests_to_web_features")
-def test_main(mock_map_tests_to_web_features, mock_file):
+def test_main(
+        mock_map_tests_to_web_features,
+        mock_file,
+        main_kwargs,
+        expected_repo_root,
+        expected_path):
 
     def fake_map_tests_to_web_features(
             cmd_cfg,
@@ -172,7 +215,7 @@ def test_main(mock_map_tests_to_web_features, mock_file):
         result.add("avif", [Mock(path="avif_test1.js")])
 
     mock_map_tests_to_web_features.side_effect = fake_map_tests_to_web_features
-    main(repo_root=os.path.join(os.sep, "test_repo_root"))
-    mock_map_tests_to_web_features.assert_called_once_with(CmdConfig(os.path.join(os.sep, "test_repo_root")), "", ANY)
-    mock_file.assert_called_once_with(os.path.join(os.sep, "test_repo_root", "WEB_FEATURES_MANIFEST.json"), "w")
+    main(**main_kwargs)
+    mock_map_tests_to_web_features.assert_called_once_with(CmdConfig(repo_root=expected_repo_root), "", ANY)
+    mock_file.assert_called_once_with(expected_path, "w")
     mock_file.return_value.write.assert_called_once_with('{"grid": ["grid_test1.js", "grid_test2.js"], "avif": ["avif_test1.js"]}')
