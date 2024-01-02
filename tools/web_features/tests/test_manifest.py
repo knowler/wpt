@@ -218,4 +218,5 @@ def test_main(
     main(**main_kwargs)
     mock_map_tests_to_web_features.assert_called_once_with(CmdConfig(repo_root=expected_repo_root), "", ANY)
     mock_file.assert_called_once_with(expected_path, "w")
-    mock_file.return_value.write.assert_called_once_with('{"grid": ["grid_test1.js", "grid_test2.js"], "avif": ["avif_test1.js"]}')
+    mock_file.return_value.write.assert_called_once_with(
+        '{"version": 1, "data": {"grid": ["grid_test1.js", "grid_test2.js"], "avif": ["avif_test1.js"]}}')

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import json
 import logging
 import os
 
@@ -129,6 +130,20 @@ def map_tests_to_web_features(
                 inherited_features
             )
 
+class WebFeatureManifestEncoder(json.JSONEncoder):
+    """
+    Custom JSON encoder.
+
+    WebFeaturesMap contains a dictionary where the value is of type set.
+    Sets cannot serialize to JSON by default. This encoder handles that by
+    calling WebFeaturesMap's to_dict() method.
+    """
+    def default(self, obj: Any) -> Any:
+        if isinstance(obj, WebFeaturesMap):
+            return obj.to_dict()
+        return super().default(obj)
+
+
 def main(venv: Any = None, **kwargs: Any) -> int:
 
     assert logger is not None
@@ -140,6 +155,6 @@ def main(venv: Any = None, **kwargs: Any) -> int:
     feature_map = WebFeaturesMap()
     map_tests_to_web_features(cmd_cfg, "", feature_map)
     with open(path, "w") as outfile:
-        outfile.write(feature_map.to_json())
+        outfile.write(json.dumps({"version": 1, "data": feature_map}, cls=WebFeatureManifestEncoder))
 
     return 0

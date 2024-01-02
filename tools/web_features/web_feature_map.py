@@ -1,10 +1,9 @@
 
 import itertools
-import json
 
 from collections import OrderedDict
 from os.path import basename
-from typing import Any, List, Optional, Sequence, Set
+from typing import Dict, List, Optional, Sequence, Set
 
 from ..manifest.item import ManifestItem
 from ..manifest.sourcefile import SourceFile
@@ -34,31 +33,15 @@ class WebFeaturesMap:
             self._feature_tests_map_[feature] = set()
         self._feature_tests_map_[feature].update([manifest_item.path for manifest_item in manifest_items])
 
-    def to_json(self) -> str:
+    def to_dict(self) -> Dict[str, List[str]]:
         """
-        Serializes the WebFeaturesMap to a JSON string.
-
         Returns:
-            The JSON string representation of the map.
+            The plain python dictionary representation of the map.
         """
-        return json.dumps(
-            self._feature_tests_map_,
-            cls=WebFeatureMapEncoder)
-
-class WebFeatureMapEncoder(json.JSONEncoder):
-    """
-    Custom JSON encoder to handle sets within the WebFeaturesMap.
-
-    Sets cannot serialize to JSON by default. This encoder handles that.
-    """
-    def default(self, obj: Any) -> Any:
-        """
-        Encodes sets as sorted lists for JSON serialization.
-        """
-        if isinstance(obj, set):
-            # Sort the converted list so that the tests are deterministic
-            return sorted(list(obj))
-        return super().default(obj)
+        return {
+            key: sorted(list(value))  # Sort the converted list so that the tests are deterministic
+            for key, value in self._feature_tests_map_.items()
+        }
 
 
 class WebFeatureToTestsDirMapper:
