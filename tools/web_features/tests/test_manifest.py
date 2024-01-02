@@ -163,8 +163,8 @@ def test_parser_with_repo_root():
 
 def test_parser_with_path_provided_abs_path():
     parser = create_parser()
-    args = parser.parse_args(["--path", "/manifest-path"])
-    assert args.path == "/manifest-path"
+    args = parser.parse_args(["--path", f"{os.path.abspath(os.sep)}manifest-path"])
+    assert args.path == f"{os.path.abspath(os.sep)}manifest-path"
 
 
 @pytest.mark.parametrize('main_kwargs,expected_repo_root,expected_path', [
