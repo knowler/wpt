@@ -5,9 +5,32 @@ from collections import OrderedDict
 from os.path import basename
 from typing import Dict, List, Optional, Sequence, Set
 
-from ..manifest.item import ManifestItem
+from ..manifest.item import ManifestItem, URLManifestItem
 from ..manifest.sourcefile import SourceFile
 from ..metadata.webfeatures.schema import FeatureEntry, FeatureFile, WebFeaturesFile
+
+
+class TestInfoForWebFeature:
+    """
+    Collection of extracted test information that relates to a given web feature
+    """
+    def __init__(self, manifest_item: ManifestItem) -> None:
+        self.path = manifest_item.path
+        # Not all manifest items are of type URLManifestItem
+        self.url: Optional[str] = None
+        if isinstance(manifest_item, URLManifestItem):
+            self.url = manifest_item.url
+
+    def to_dict(self) -> Dict[str, str]:
+        if self.url:
+            return {
+                "path": self.path,
+                "url": self.url
+            }
+
+        return {
+            "path": self.path,
+        }
 
 
 class WebFeaturesMap:
@@ -19,7 +42,7 @@ class WebFeaturesMap:
         """
         Initializes the WebFeaturesMap with an OrderedDict to maintain feature order.
         """
-        self._feature_tests_map_: OrderedDict[str, Set[str]] = OrderedDict()
+        self._feature_tests_map_: OrderedDict[str, Set[TestInfoForWebFeature]] = OrderedDict()
 
     def add(self, feature: str, manifest_items: List[ManifestItem]) -> None:
         """
@@ -29,19 +52,22 @@ class WebFeaturesMap:
             feature: The name of the web feature.
             manifest_items: The ManifestItem objects representing the test files.
         """
-        if self._feature_tests_map_.get(feature) is None:
-            self._feature_tests_map_[feature] = set()
-        self._feature_tests_map_[feature].update([manifest_item.path for manifest_item in manifest_items])
+        tests = self._feature_tests_map_.get(feature, set())
+        self._feature_tests_map_[feature] = tests.union([TestInfoForWebFeature(manifest_item) for manifest_item in manifest_items])
 
-    def to_dict(self) -> Dict[str, List[str]]:
+    def to_dict(self) -> Dict[str, List[Dict[str, str]]]:
         """
         Returns:
             The plain python dictionary representation of the map.
         """
-        return {
-            key: sorted(list(value))  # Sort the converted list so that the tests are deterministic
-            for key, value in self._feature_tests_map_.items()
-        }
+        rv: Dict[str, List[Dict[str, str]]] = {}
+        for feature, manifest_items in self._feature_tests_map_.items():
+            test_info: List[Dict[str, str]] = []
+            for manifest_item in manifest_items:
+                test_info.append(manifest_item.to_dict())
+            # Sort by the "path" field because not all manifest items have a "url".
+            rv[feature] = sorted(test_info, key=lambda x: x["path"])
+        return rv
 
 
 class WebFeatureToTestsDirMapper:
@@ -59,7 +85,7 @@ class WebFeatureToTestsDirMapper:
 
         self.all_test_files_in_dir = all_test_files_in_dir
         self.test_path_to_manifest_items_map = dict([(basename(f.path), f.manifest_items()[1]) for f in self.all_test_files_in_dir])
-        # Check if the current directory has a WEB_FEATURE_FILENAME
+        # Used to check if the current directory has a WEB_FEATURE_FILENAME
         self.web_feature_file = web_feature_file
         # Gets the manifest items for each test file and returns them into a single list.
         self. get_all_manifest_items_for_dir = list(itertools.chain.from_iterable([

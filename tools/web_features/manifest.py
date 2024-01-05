@@ -39,11 +39,14 @@ def create_parser() -> argparse.ArgumentParser:
                         help="The WPT directory. Use this "
                         "option if the script exists outside the repository")
     parser.add_argument(
+        "--url-base", action="store", default="/",
+        help="Base url to use as the mount point for tests in this manifest.")
+    parser.add_argument(
         "-p", "--path", type=abs_path, help="Path to manifest file.")
     return parser
 
 
-def find_all_test_files_in_dir(root_dir: str, rel_dir_path: str) -> List[SourceFile]:
+def find_all_test_files_in_dir(root_dir: str, rel_dir_path: str, url_base: str) -> List[SourceFile]:
     """
     Finds all test files within a given directory.
 
@@ -53,6 +56,7 @@ def find_all_test_files_in_dir(root_dir: str, rel_dir_path: str) -> List[SourceF
     Args:
         root_dir (str): The root directory of the repository.
         rel_dir_path (str): The relative path of the directory to search.
+        url_base (str): Base url to use as the mount point for tests in this manifest.
 
     Returns:
         List[SourceFile]: A list of SourceFile objects representing the found test files.
@@ -62,7 +66,7 @@ def find_all_test_files_in_dir(root_dir: str, rel_dir_path: str) -> List[SourceF
     for file in os.listdir(full_dir_path):
         full_path = os.path.join(full_dir_path, file)
         rel_file_path = os.path.relpath(full_path, root_dir)
-        source_file = SourceFile(root_dir, rel_file_path, "/")
+        source_file = SourceFile(root_dir, rel_file_path, url_base)
         if not source_file.name_is_non_test and source_file.type != SupportFile.item_type:
             rv.append(source_file)
     return rv
@@ -74,6 +78,7 @@ class CmdConfig():
     """
 
     repo_root: str  # The root directory of the WPT repository
+    url_base: str  # Base URL used when converting file paths to urls
 
 
 def map_tests_to_web_features(
@@ -116,7 +121,7 @@ def map_tests_to_web_features(
                 raise e
 
         WebFeatureToTestsDirMapper(
-            find_all_test_files_in_dir(cmd_cfg.repo_root, rel_dir_path),
+            find_all_test_files_in_dir(cmd_cfg.repo_root, rel_dir_path, cmd_cfg.url_base),
             web_feature_file
         ).run(result, inherited_features)
 
@@ -151,10 +156,16 @@ def main(venv: Any = None, **kwargs: Any) -> int:
     repo_root = kwargs.get('repo_root') or localpaths.repo_root
     path = kwargs.get("path") or os.path.join(repo_root, MANIFEST_FILE_NAME)
 
-    cmd_cfg = CmdConfig(repo_root)
+    cmd_cfg = CmdConfig(repo_root, kwargs["url_base"])
     feature_map = WebFeaturesMap()
     map_tests_to_web_features(cmd_cfg, "", feature_map)
     with open(path, "w") as outfile:
-        outfile.write(json.dumps({"version": 1, "data": feature_map}, cls=WebFeatureManifestEncoder))
+        outfile.write(
+            json.dumps(
+                {
+                    "version": 1,
+                    "data": feature_map,
+                    "config": {"url_base": cmd_cfg.url_base}
+                }, cls=WebFeatureManifestEncoder))
 
     return 0

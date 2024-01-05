@@ -1,9 +1,8 @@
 # mypy: allow-untyped-defs
 
-# import pytest
-from collections import OrderedDict
 from unittest.mock import Mock, patch
 
+from ...manifest.item import URLManifestItem
 from ...metadata.webfeatures.schema import FeatureFile
 from ..web_feature_map import WebFeaturesMap, WebFeatureToTestsDirMapper
 
@@ -15,8 +14,8 @@ TEST_FILES = [
             return_value=(
                 None,
                 [
-                    Mock(path="root/blob-range.any.html"),
-                    Mock(path="root/blob-range.any.worker.html"),
+                    Mock(spec=URLManifestItem, path="root/blob-range.any.html", url="/root/blob-range.any.html"),
+                    Mock(spec=URLManifestItem, path="root/blob-range.any.worker.html", url="/root/blob-range.any.worker.html"),
                 ])
         )
     ),
@@ -26,8 +25,8 @@ TEST_FILES = [
             return_value=(
                 None,
                 [
-                    Mock(path="root/foo-range.any.html"),
-                    Mock(path="root/foo-range.any.worker.html"),
+                    Mock(spec=URLManifestItem, path="root/foo-range.any.html", url="/root/foo-range.any.html"),
+                    Mock(spec=URLManifestItem, path="root/foo-range.any.worker.html", url="/root/foo-range.any.worker.html"),
                 ])
         )
     ),
@@ -42,14 +41,26 @@ def test_process_recursive_feature():
     feature_entry.name = "grid"
     mapper._process_recursive_feature(inherited_features, feature_entry, result)
 
-    assert result._feature_tests_map_ == OrderedDict([
-        ("grid", {
-            "root/blob-range.any.html",
-            "root/blob-range.any.worker.html",
-            "root/foo-range.any.html",
-            "root/foo-range.any.worker.html"
-        })
-    ])
+    assert result.to_dict() == {
+        "grid": [
+            {
+                "path": "root/blob-range.any.html",
+                "url": "/root/blob-range.any.html"
+            },
+            {
+                "path": "root/blob-range.any.worker.html",
+                "url": "/root/blob-range.any.worker.html"
+            },
+            {
+                "path": "root/foo-range.any.html",
+                "url": "/root/foo-range.any.html"
+            },
+            {
+                "path": "root/foo-range.any.worker.html",
+                "url": "/root/foo-range.any.worker.html"
+            }
+        ],
+    }
     assert inherited_features == ["grid"]
 
 
@@ -65,41 +76,77 @@ def test_process_non_recursive_feature():
 
     mapper._process_non_recursive_feature(feature_name, feature_files, result)
 
-    assert result._feature_tests_map_ == OrderedDict([
-        ("feature1", {
-            "root/blob-range.any.html",
-            "root/blob-range.any.worker.html"
-        })
-    ])
+    assert result.to_dict() == {
+        "feature1": [
+            {
+                "path": "root/blob-range.any.html",
+                "url": "/root/blob-range.any.html",
+            },
+            {
+                "path": "root/blob-range.any.worker.html",
+                "url": "/root/blob-range.any.worker.html"
+            },
+        ]
+    }
 
 
 def test_process_inherited_features():
     mapper = WebFeatureToTestsDirMapper(TEST_FILES, None)
     result = WebFeaturesMap()
     result.add("avif", [
-        Mock(path="root/bar-range.any.html"),
-        Mock(path="root/bar-range.any.worker.html"),
+        Mock(spec=URLManifestItem, path="root/bar-range.any.html", url="/root/bar-range.any.html"),
+        Mock(spec=URLManifestItem, path="root/bar-range.any.worker.html", url="/root/bar-range.any.worker.html"),
     ])
     inherited_features = ["avif", "grid"]
 
     mapper._process_inherited_features(inherited_features, result)
 
-    assert result._feature_tests_map_ == OrderedDict([
-        ("avif", {
-            "root/bar-range.any.html",
-            "root/bar-range.any.worker.html",
-            "root/blob-range.any.html",
-            "root/blob-range.any.worker.html",
-            "root/foo-range.any.html",
-            "root/foo-range.any.worker.html"
-        }),
-        ("grid", {
-            "root/blob-range.any.html",
-            "root/blob-range.any.worker.html",
-            "root/foo-range.any.html",
-            "root/foo-range.any.worker.html"
-        })
-    ])
+    assert result.to_dict() == {
+        "avif": [
+            {
+                "path": "root/bar-range.any.html",
+                "url": "/root/bar-range.any.html"
+            },
+            {
+                "path": "root/bar-range.any.worker.html",
+                "url": "/root/bar-range.any.worker.html"
+            },
+            {
+                "path": "root/blob-range.any.html",
+                "url": "/root/blob-range.any.html"
+            },
+            {
+                "path": "root/blob-range.any.worker.html",
+                "url": "/root/blob-range.any.worker.html"
+            },
+            {
+                "path": "root/foo-range.any.html",
+                "url": "/root/foo-range.any.html"
+            },
+            {
+                "path": "root/foo-range.any.worker.html",
+                "url": "/root/foo-range.any.worker.html"
+            }
+        ],
+        "grid": [
+            {
+                "path": "root/blob-range.any.html",
+                "url": "/root/blob-range.any.html"
+            },
+            {
+                "path": "root/blob-range.any.worker.html",
+                "url": "/root/blob-range.any.worker.html"
+            },
+            {
+                "path": "root/foo-range.any.html",
+                "url": "/root/foo-range.any.html"
+            },
+            {
+                "path": "root/foo-range.any.worker.html",
+                "url": "/root/foo-range.any.worker.html"
+            }
+        ],
+    }
     assert inherited_features == ["avif", "grid"]
 
 def create_feature_entry(name, recursive=False, files=None):

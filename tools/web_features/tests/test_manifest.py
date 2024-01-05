@@ -29,7 +29,7 @@ def test_find_all_test_files_in_dir(mock_source_file_class, mock_listdir):
 
     mock_source_file_class.side_effect = create_source_file_mock
 
-    test_files = find_all_test_files_in_dir("root_dir", "rel_dir_path")
+    test_files = find_all_test_files_in_dir("root_dir", "rel_dir_path", "/")
 
     # Assert calls to the mocked constructor with expected arguments
     mock_source_file_class.assert_has_calls([
@@ -116,8 +116,11 @@ def test_map_tests_to_web_features_recursive(
         expected_subdir2_web_feature_file,
     ]
 
-    def fake_find_all_test_files_in_dir(root, rel_path):
-        if (root == "repo_root" and rel_path == "."):
+    def fake_find_all_test_files_in_dir(root, rel_path, url_root):
+        # All cases should use url_root == "/"
+        if url_root != "/":
+            return None
+        elif (root == "repo_root" and rel_path == "."):
             return expected_root_files
         elif (root == "repo_root" and rel_path == "subdir1"):
             return expected_subdir1_files
@@ -128,7 +131,7 @@ def test_map_tests_to_web_features_recursive(
         elif (root == "repo_root" and rel_path == "subdir2"):
             return expected_subdir2_files
     mock_find_all_test_files_in_dir.side_effect = fake_find_all_test_files_in_dir
-    cmd_cfg = CmdConfig("repo_root")
+    cmd_cfg = CmdConfig("repo_root", "/")
     result = WebFeaturesMap()
 
     map_tests_to_web_features(cmd_cfg, "", result)
@@ -214,9 +217,13 @@ def test_main(
         result.add("grid", [Mock(path="grid_test1.js"), Mock(path="grid_test2.js")])
         result.add("avif", [Mock(path="avif_test1.js")])
 
+    default_kwargs = {"url_base": "/"}
+    main_kwargs.update(default_kwargs)
     mock_map_tests_to_web_features.side_effect = fake_map_tests_to_web_features
     main(**main_kwargs)
-    mock_map_tests_to_web_features.assert_called_once_with(CmdConfig(repo_root=expected_repo_root), "", ANY)
+    mock_map_tests_to_web_features.assert_called_once_with(CmdConfig(repo_root=expected_repo_root, url_base="/"), "", ANY)
     mock_file.assert_called_once_with(expected_path, "w")
     mock_file.return_value.write.assert_called_once_with(
-        '{"version": 1, "data": {"grid": ["grid_test1.js", "grid_test2.js"], "avif": ["avif_test1.js"]}}')
+        ('{"version": 1,'
+         ' "data": {"grid": [{"path": "grid_test1.js"}, {"path": "grid_test2.js"}], "avif": [{"path": "avif_test1.js"}]},'
+         ' "config": {"url_base": "/"}}'))
