@@ -148,6 +148,19 @@ def start_dbus():
 
 
 def install_chrome(channel):
+    # Install Chrome for Testing for canary channel.
+    if channel == "canary":
+        run(["sh", "-c", f"./wpt install --channel {channel} chrome browser"])
+        file_names = os.listdir(os.path.join(os.getcwd(),
+                                            f"_venv3/browsers/{channel}/chrome-linux64"))
+        # Move all files from the Chrome for Testing download to the same directory.
+        for file_name in file_names:
+            path = os.path.join(os.getcwd(),
+                                f"_venv3/browsers/{channel}/chrome-linux64",
+                                file_name)
+            run(["sudo", "mv", path, "/usr/bin"])
+        return
+
     if channel in ("experimental", "dev"):
         deb_archive = "google-chrome-unstable_current_amd64.deb"
     elif channel == "beta":
