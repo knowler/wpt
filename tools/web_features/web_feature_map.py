@@ -14,22 +14,12 @@ class TestInfoForWebFeature:
     """
     Collection of extracted test information that relates to a given web feature
     """
-    def __init__(self, manifest_item: ManifestItem) -> None:
-        self.path = manifest_item.path
-        # Not all manifest items are of type URLManifestItem
-        self.url: Optional[str] = None
-        if isinstance(manifest_item, URLManifestItem):
-            self.url = manifest_item.url
+    def __init__(self, manifest_item: URLManifestItem) -> None:
+        self.url = manifest_item.url
 
     def to_dict(self) -> Dict[str, str]:
-        if self.url:
-            return {
-                "path": self.path,
-                "url": self.url
-            }
-
         return {
-            "path": self.path,
+            "url": self.url
         }
 
 
@@ -44,6 +34,7 @@ class WebFeaturesMap:
         """
         self._feature_tests_map_: OrderedDict[str, Set[TestInfoForWebFeature]] = OrderedDict()
 
+
     def add(self, feature: str, manifest_items: List[ManifestItem]) -> None:
         """
         Adds a web feature and its associated test files to the map.
@@ -53,7 +44,9 @@ class WebFeaturesMap:
             manifest_items: The ManifestItem objects representing the test files.
         """
         tests = self._feature_tests_map_.get(feature, set())
-        self._feature_tests_map_[feature] = tests.union([TestInfoForWebFeature(manifest_item) for manifest_item in manifest_items])
+        self._feature_tests_map_[feature] = tests.union([
+            TestInfoForWebFeature(manifest_item) for manifest_item in manifest_items if isinstance(manifest_item, URLManifestItem)])
+
 
     def to_dict(self) -> Dict[str, List[Dict[str, str]]]:
         """
@@ -66,7 +59,7 @@ class WebFeaturesMap:
             for manifest_item in manifest_items:
                 test_info.append(manifest_item.to_dict())
             # Sort by the "path" field because not all manifest items have a "url".
-            rv[feature] = sorted(test_info, key=lambda x: x["path"])
+            rv[feature] = sorted(test_info, key=lambda x: x["url"])
         return rv
 
 

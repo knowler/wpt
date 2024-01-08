@@ -14,8 +14,8 @@ TEST_FILES = [
             return_value=(
                 None,
                 [
-                    Mock(spec=URLManifestItem, path="root/blob-range.any.html", url="/root/blob-range.any.html"),
-                    Mock(spec=URLManifestItem, path="root/blob-range.any.worker.html", url="/root/blob-range.any.worker.html"),
+                    Mock(spec=URLManifestItem, url="/root/blob-range.any.html"),
+                    Mock(spec=URLManifestItem, url="/root/blob-range.any.worker.html"),
                 ])
         )
     ),
@@ -25,8 +25,8 @@ TEST_FILES = [
             return_value=(
                 None,
                 [
-                    Mock(spec=URLManifestItem, path="root/foo-range.any.html", url="/root/foo-range.any.html"),
-                    Mock(spec=URLManifestItem, path="root/foo-range.any.worker.html", url="/root/foo-range.any.worker.html"),
+                    Mock(spec=URLManifestItem, url="/root/foo-range.any.html"),
+                    Mock(spec=URLManifestItem, url="/root/foo-range.any.worker.html"),
                 ])
         )
     ),
@@ -44,19 +44,15 @@ def test_process_recursive_feature():
     assert result.to_dict() == {
         "grid": [
             {
-                "path": "root/blob-range.any.html",
                 "url": "/root/blob-range.any.html"
             },
             {
-                "path": "root/blob-range.any.worker.html",
                 "url": "/root/blob-range.any.worker.html"
             },
             {
-                "path": "root/foo-range.any.html",
                 "url": "/root/foo-range.any.html"
             },
             {
-                "path": "root/foo-range.any.worker.html",
                 "url": "/root/foo-range.any.worker.html"
             }
         ],
@@ -79,11 +75,9 @@ def test_process_non_recursive_feature():
     assert result.to_dict() == {
         "feature1": [
             {
-                "path": "root/blob-range.any.html",
                 "url": "/root/blob-range.any.html",
             },
             {
-                "path": "root/blob-range.any.worker.html",
                 "url": "/root/blob-range.any.worker.html"
             },
         ]
@@ -104,45 +98,35 @@ def test_process_inherited_features():
     assert result.to_dict() == {
         "avif": [
             {
-                "path": "root/bar-range.any.html",
                 "url": "/root/bar-range.any.html"
             },
             {
-                "path": "root/bar-range.any.worker.html",
                 "url": "/root/bar-range.any.worker.html"
             },
             {
-                "path": "root/blob-range.any.html",
                 "url": "/root/blob-range.any.html"
             },
             {
-                "path": "root/blob-range.any.worker.html",
                 "url": "/root/blob-range.any.worker.html"
             },
             {
-                "path": "root/foo-range.any.html",
                 "url": "/root/foo-range.any.html"
             },
             {
-                "path": "root/foo-range.any.worker.html",
                 "url": "/root/foo-range.any.worker.html"
             }
         ],
         "grid": [
             {
-                "path": "root/blob-range.any.html",
                 "url": "/root/blob-range.any.html"
             },
             {
-                "path": "root/blob-range.any.worker.html",
                 "url": "/root/blob-range.any.worker.html"
             },
             {
-                "path": "root/foo-range.any.html",
                 "url": "/root/foo-range.any.html"
             },
             {
-                "path": "root/foo-range.any.worker.html",
                 "url": "/root/foo-range.any.worker.html"
             }
         ],

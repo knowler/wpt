@@ -9,7 +9,7 @@ from ..manifest import create_parser, find_all_test_files_in_dir, main, map_test
 from ..web_feature_map import WebFeatureToTestsDirMapper, WebFeaturesMap
 from ...metadata.webfeatures.schema import WEB_FEATURES_YML_FILENAME
 from ...manifest.sourcefile import SourceFile
-from ...manifest.item import SupportFile
+from ...manifest.item import SupportFile, URLManifestItem
 from ... import localpaths
 
 
@@ -171,11 +171,13 @@ def test_parser_with_path_provided_abs_path():
 
 
 @pytest.mark.parametrize('main_kwargs,expected_repo_root,expected_path', [
+    # No flags. All default
     (
         {},
         localpaths.repo_root,
         os.path.join(localpaths.repo_root, "WEB_FEATURES_MANIFEST.json")
     ),
+    # Provide the repo_root flag
     (
         {
             "repo_root": os.path.join(os.sep, "test_repo_root"),
@@ -183,6 +185,7 @@ def test_parser_with_path_provided_abs_path():
         os.path.join(os.sep, "test_repo_root"),
         os.path.join(os.sep, "test_repo_root", "WEB_FEATURES_MANIFEST.json")
     ),
+    # Provide the path flag
     (
         {
             "path": os.path.join(os.sep, "test_path", "WEB_FEATURES_MANIFEST.json"),
@@ -190,6 +193,7 @@ def test_parser_with_path_provided_abs_path():
         localpaths.repo_root,
         os.path.join(os.sep, "test_path", "WEB_FEATURES_MANIFEST.json")
     ),
+    # Provide the repo_root and path flags
     (
         {
             "path": os.path.join(os.sep, "test_path", "WEB_FEATURES_MANIFEST.json"),
@@ -215,10 +219,10 @@ def test_main(
             visited_dirs = set(),
             prev_inherited_features = []):
         result.add("grid", [
-            Mock(path="grid_test1.js", url="/grid_test1.js"),
-            Mock(path="grid_test2.js", url="/grid_test2.js"),
+            Mock(spec=URLManifestItem, url="/grid_test1.js"),
+            Mock(spec=URLManifestItem, url="/grid_test2.js"),
         ])
-        result.add("avif", [Mock(path="no_url_test1.js", url="/no_url_test1.js")])
+        result.add("avif", [Mock(spec=URLManifestItem, url="/avif_test1.js")])
 
     default_kwargs = {"url_base": "/"}
     main_kwargs.update(default_kwargs)
@@ -228,5 +232,5 @@ def test_main(
     mock_file.assert_called_once_with(expected_path, "w")
     mock_file.return_value.write.assert_called_once_with(
         ('{"version": 1,'
-         ' "data": {"grid": [{"path": "grid_test1.js"}, {"path": "grid_test2.js"}], "avif": [{"path": "avif_test1.js"}]},'
+         ' "data": {"grid": [{"url": "/grid_test1.js"}, {"url": "/grid_test2.js"}], "avif": [{"url": "/avif_test1.js"}]},'
          ' "config": {"url_base": "/"}}'))

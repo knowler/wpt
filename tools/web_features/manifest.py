@@ -77,17 +77,13 @@ The file written is a JSON file. The format is
          "type":"object",
          "additionalProperties":false,
          "properties":{
-            "path":{
-               "type":"string",
-               "description": "The path field in tools.manifest.item.ManifestItem"
-            },
             "url":{
                "type":"string",
                "description": "The url field in tools.manifest.item.URLManifestItem"
             }
          },
          "required":[
-            "path"
+            "url"
          ],
          "title":"Manifest item info"
       }
