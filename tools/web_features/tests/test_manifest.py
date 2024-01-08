@@ -214,8 +214,11 @@ def test_main(
             result,
             visited_dirs = set(),
             prev_inherited_features = []):
-        result.add("grid", [Mock(path="grid_test1.js"), Mock(path="grid_test2.js")])
-        result.add("avif", [Mock(path="avif_test1.js")])
+        result.add("grid", [
+            Mock(path="grid_test1.js", url="/grid_test1.js"),
+            Mock(path="grid_test2.js", url="/grid_test2.js"),
+        ])
+        result.add("avif", [Mock(path="no_url_test1.js", url="/no_url_test1.js")])
 
     default_kwargs = {"url_base": "/"}
     main_kwargs.update(default_kwargs)

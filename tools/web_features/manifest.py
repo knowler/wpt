@@ -16,6 +16,88 @@ from ..web_features.web_feature_map import WebFeatureToTestsDirMapper, WebFeatur
 from .. import localpaths
 from ..metadata.webfeatures.schema import WEB_FEATURES_YML_FILENAME, WebFeaturesFile
 
+"""
+This command generates a manifest file. This file contains a mapping of web
+features to manifest items. The data comes from the WEB_FEATURES.yml that are
+throughout the wpt source code. For more details about the file, check out RFC 163
+https://github.com/web-platform-tests/rfcs/pull/163.
+
+The file written is a JSON file. The format is
+{
+   "$schema":"http://json-schema.org/draft-06/schema#",
+   "$ref":"#/definitions/File",
+   "definitions":{
+      "File":{
+         "type":"object",
+         "additionalProperties":false,
+         "properties":{
+            "version":{
+               "type":"integer",
+               "description":"Schema version of the file.",
+               "enum":[
+                  1
+               ]
+            },
+            "data":{
+               "type":"object",
+               "description":"High level container for the data. Object key is the web feature.",
+               "additionalProperties":{
+                  "type":"array",
+                  "items":{
+                     "$ref":"#/definitions/ManifestItem"
+                  }
+               }
+            },
+            "config":{
+               "$ref":"#/definitions/Config"
+            }
+         },
+         "required":[
+            "config",
+            "data",
+            "version"
+         ],
+         "title":"File"
+      },
+      "Config":{
+         "type":"object",
+         "description":"Information about config to generate the manifest file",
+         "additionalProperties":false,
+         "properties":{
+            "url_base":{
+               "type":"string"
+            }
+         },
+         "required":[
+            "url_base"
+         ],
+         "title":"Config"
+      },
+      "ManifestItem":{
+         "type":"object",
+         "additionalProperties":false,
+         "properties":{
+            "path":{
+               "type":"string",
+               "description": "The path field in tools.manifest.item.ManifestItem"
+            },
+            "url":{
+               "type":"string",
+               "description": "The url field in tools.manifest.item.URLManifestItem"
+            }
+         },
+         "required":[
+            "path"
+         ],
+         "title":"Manifest item info"
+      }
+   }
+}
+
+
+This file does not follow the same format as the original manifest file,
+MANIFEST.json.
+"""
 
 logger = logging.getLogger(__name__)
 
