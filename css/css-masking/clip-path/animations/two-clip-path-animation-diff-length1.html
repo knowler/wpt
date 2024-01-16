@@ -41,8 +41,10 @@
     // the one with higher compositing order finishes, the other one would still
     // run normally.
     const animations = document.getAnimations();
-    animations[1].finished.then(() => {
-      takeScreenshot();
+    requestAnimationFrame(() => {
+      animations[1].finished.then(() => {
+        takeScreenshot();
+      });
     });
   </script>
 </body>
