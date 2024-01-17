@@ -171,11 +171,11 @@ promise_test(async t => {
 
   await sendCloseRequest();
   await waitForPotentialCloseEvent();
-  assert_array_equals(events, ["freeWatcher close"]);
+  assert_array_equals(events, ["freeWatcher close", "activationWatcher2 close"]);
 
   await sendCloseRequest();
   await waitForPotentialCloseEvent();
-  assert_array_equals(events, ["freeWatcher close", "activationWatcher2 close"]);
+  assert_array_equals(events, ["freeWatcher close", "activationWatcher2 close", "activationWatcher1 close"]);
 
   await sendCloseRequest();
   await waitForPotentialCloseEvent();
